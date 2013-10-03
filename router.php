@@ -15,8 +15,8 @@ Author URI: http://ejehardenberg.github.io
 class Router{
 	private static $instance;
 	const queryVar = "route";
-	const postType = "routed_page";
-	const slug = "routed";
+	const postType = "routed_page"; /*If you want to use a custom template try doing single-routed_page*/
+	const slug = "routed"; 
 	const title = "Custom Title";
 	protected $baseDirectory = "";
 	protected $placeHolderId = -1;
@@ -43,6 +43,7 @@ class Router{
 		add_filter( 'single_post_title', array( $this, 'get_title' ), 10, 2 );
 		/*Make sure we don't get redirected */
 		add_filter( 'redirect_canonical', array( $this, 'override_redirect' ), 10, 2 );
+		$this->allowedViews = get_option('allowedViews',$this->allowedViews);
 	}
 
 	public function edit_query( WP_Query $query ) {
