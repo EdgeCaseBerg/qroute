@@ -20,6 +20,8 @@ class Router{
 	const title = "Custom Title";
 	protected $baseDirectory = "";
 	protected $placeHolderId = -1;
+	protected $routeToMatch = "simple";
+	protected $allowedViews = array("simple" );
 
 	private function __construct() {
 		/* Register our custom post type with wordpress */
@@ -46,18 +48,21 @@ class Router{
 	public function edit_query( WP_Query $query ) {
 		// we only care if this is the query to show our pages
 		if ( isset( $query->query_vars[self::queryVar] ) && $query->query_vars[self::queryVar] ) {
-			/* Create a placeholder post for routing if we need to */
-			$this->placeHolderId = get_option("router_placeholder",$this->placeHolderId);
-			if($this->placeHolderId == -1){
-				$this->placeHolderId = self::make_post();
-				add_option( "router_placeholder", $this->placeHolderId, "", "yes" );
-			}
-			$query->query_vars['post_type'] = self::postType;
-			$query->query_vars['p'] = $this->placeHolderId;
-			$query->is_single = TRUE;
-			$query->is_singular = TRUE;
-			$query->is_404 = FALSE;
-			$query->is_home = FALSE;
+			if(in_array($query->query_vars[self::queryVar], $this->allowedViews) ){
+				$this->routeToMatch = $query->query_vars[self::queryVar];
+				/* Create a placeholder post for routing if we need to */
+				$this->placeHolderId = get_option("router_placeholder",$this->placeHolderId);
+				if($this->placeHolderId == -1){
+					$this->placeHolderId = self::make_post();
+					add_option( "router_placeholder", $this->placeHolderId, "", "yes" );
+				}
+				$query->query_vars['post_type'] = self::postType;
+				$query->query_vars['p'] = $this->placeHolderId;
+				$query->is_single = TRUE;
+				$query->is_singular = TRUE;
+				$query->is_404 = FALSE;
+				$query->is_home = FALSE;
+				}
 		}
 	}
 
@@ -76,12 +81,15 @@ class Router{
 	 * it will be displayed by wordpress's looping stuff.
 	*/
 	public function get_page( $post ) {
-		error_log("called get page");
-		error_log($post->post_type);
 		if ( $post->post_type == self::postType ) {
 			remove_filter( 'the_content', 'wpautop' );
-			$view = self::loadView( 'simple', array(	'showme' => "showme",
-				) );
+			$view = self::loadView( $this->routeToMatch, array(
+				/* Any interesting variables to pass to your views 
+				 * should go here, they'll be made available to
+				 * your view.
+				*/
+				'example' => 'I show up on the page!'
+			) );
 			global $pages;
 			$pages = array( $view );
 		}
@@ -98,7 +106,6 @@ class Router{
 		/* Make whatever arguments from the args array available*/
 		if ( !empty( $args ) ) extract( $args );
 		ob_start();
-		error_log($this->baseDirectory . 'views/' . $viewName);
 		@include $this->baseDirectory . 'views/' . $viewName;
 		return ob_get_clean();	
 	}

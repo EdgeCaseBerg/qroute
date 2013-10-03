@@ -1,7 +1,8 @@
 <?php
 	echo "I'm working! Fancy that!";
-	if(isset($showme))
-		echo $showme;
+	if(isset($example))
+		echo $example;
+
 ?>
 <h1>WORKING</h1>
 
